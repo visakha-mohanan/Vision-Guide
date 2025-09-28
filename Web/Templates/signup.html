@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Sign up to VisionGuide</title>
+</head>
+<body>
+    
+    <div class="container">
+        <form id="SignUpForm"> 
+        <h2><center>Sign up for VisionGuide</center></h2>
+
+        <label for="text">Fullname</label> 
+        <input type="text" id="fullname" name="fullname" required>
+
+        <label for="text">Username</label> 
+        <input type="text" id="username" name="username" required>
+
+        <label for="email">Email</label> 
+        <input type="email" id="email" name="email" required> 
+
+        <label for="password">Password</label> 
+        <input type="password" id="password" name="password" required>
+        
+        <label for="password">Confirm password</label> 
+        <input type="password" id="confirmpassword" name="confirmpassword" required>
+
+        <label for="dob">Date of birth</label> 
+        <input type="date" id="dob" name="dob" required> 
+
+        <label for="location">Location</label>
+        <input type="text" id="location" name="location" required>
+
+        <label for="gender">Gender</label> 
+        <select id="gender" name="gender" required> 
+            <option value="">Select</option> 
+            <option value="male">Male</option> 
+            <option value="female">Female</option>  
+            <option value="other">Other</option> 
+        </select> 
+
+        <label for="job">Working stream/Job</label>
+        <input type="text" id="job" name="job" required>
+
+        <button type="submit">Register</button> 
+
+        <p><center>Already have an account? <a href="signin.html">Sign in</a></center></p>
+    </form> 
+    </div>
+
+    <script>
+
+        document.getElementById("SignUpForm").addEventListener("submit", function(event) { 
+        event.preventDefault(); 
+ 
+        const fullname = document.getElementById("fullname").value; 
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value
+        const password = document.getElementById("password").value; 
+        const confirmpassword = document.getElementById("confirmpassword").value; 
+        const dateofbirth = document.getElementById("dob").value;
+        const location = document.getElementById("location").value;
+        const gender = document.getElementById("gender").value;
+        const job = document.getElementById("job").value; 
+ 
+        if (!/^[A-Za-z]+( [A-Za-z]+){1,2}$/.test(fullname)) 
+        {
+            alert("Only letters and single spaces allowed between names, at least first and last name.");
+            return;
+        }
+
+        if (!/^[A-Za-z][A-Za-z0-9_]{3,19}$/.test(username)) 
+        {
+            alert("Username must start with a letter, can contain letters, numbers, underscores, and be 4-20 characters long.");
+            return;
+        }
+
+        if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/.test(email)) 
+        {
+            alert("Please enter a valid email address"); 
+            return; 
+        }
+
+        if (password.length < 6) 
+        { 
+            alert("Password must be at least 6 characters long."); 
+            return; 
+        } 
+
+        if (password !== confirmpassword) 
+        { 
+            alert("Passwords do not match.");
+            return; 
+        }
+ 
+        if (dateofbirth === "") 
+        {
+            alert("Please select your DOB.");
+            return;
+        }
+
+        if (location === "") 
+        {
+            alert("Please enter your location.");
+            return;
+        }
+        
+        if (gender === "") 
+        { 
+            alert("Please select your gender.");
+            return; 
+        }
+
+        if (job === "") 
+        { 
+            alert("Please enter your working stream/job.");
+            return; 
+        }
+        
+        alert("Registration successful!"); 
+        this.reset();
+    }); 
+
+    </script> 
+
+</body>
+</html>

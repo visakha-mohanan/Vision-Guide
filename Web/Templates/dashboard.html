@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Dashboard</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; margin: 0; padding-top: 50px;">
+
+    <div style="background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 800px; width: 100%; text-align: center;">
+        <h1 style="color: #333;">Welcome to VisionGuide, {{ username }}!</h1>
+        <p style="color: #555; font-size: 1.1em;">Your personalized hub for eye health and wellness.</p>
+
+        <div style="margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+
+            <a href="#" style="text-decoration: none; color: #333;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    <h3 style="color: #5cb85c;">My Profile</h3>
+                    <p>Manage your account details and preferences.</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('predict_page') }}" style="text-decoration: none; color: #333;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    <h3 style="color: #5cb85c;">Eye Disease Detection</h3>
+                    <p>Upload eye images to get an immediate AI-powered analysis.</p>
+                </div>
+            </a>
+            
+            <a href="#" style="text-decoration: none; color: #333;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    <h3 style="color: #5cb85c;">Personalized Reports</h3>
+                    <p>View and download detailed reports of your eye checkups.</p>
+                </div>
+            </a>
+            
+            <a href="#" style="text-decoration: none; color: #333;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    <h3 style="color: #5cb85c;">Find Eye Care</h3>
+                    <p>Locate nearby clinics and specialists for consultation.</p>
+                </div>
+            </a>
+
+            <a href="{{ url_for('color_vision_test') }}" style="text-decoration: none; color: #333;">
+                <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: transform 0.2s;">
+                    <h3 style="color: #5cb85c;">Color-Vison Test</h3>
+                    <p>Take a test to check your color vision using Ishihara plates.</p>
+                </div>
+            </a>
+            
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <a href="{{ url_for('logout') }}" style="text-decoration: none; padding: 10px 20px; border-radius: 4px; background-color: #dc3545; color: white; font-size: 16px;">Logout</a>
+        </div>
+    </div>
+</body>
+</html>

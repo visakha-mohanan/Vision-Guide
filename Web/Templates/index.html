@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eye Disease Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .file-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto p-8 bg-white rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold mb-2 text-gray-800">Eye Disease Detection</h1>
+        <p class="text-gray-600 mb-6">Upload retinal images to get a prediction.</p>
+
+        <!-- New file input for left eye -->
+        <div class="file-input-container">
+            <label for="left-eye-file" class="block text-gray-700 text-sm font-bold mb-2">Left Eye Image</label>
+            <input type="file" id="left-eye-file" accept="image/*" class="w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100
+                rounded-md shadow-sm border border-gray-300">
+        </div>
+
+        <!-- New file input for right eye -->
+        <div class="file-input-container">
+            <label for="right-eye-file" class="block text-gray-700 text-sm font-bold mb-2">Right Eye Image</label>
+            <input type="file" id="right-eye-file" accept="image/*" class="w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100
+                rounded-md shadow-sm border border-gray-300">
+        </div>
+        
+        <button id="predict-button" class="w-full py-2 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-300">
+            Predict
+        </button>
+
+        <div id="result" class="mt-6 p-4 rounded-lg text-center font-bold"></div>
+    </div>
+
+    <script>
+        document.getElementById('predict-button').addEventListener('click', async () => {
+            const leftEyeFile = document.getElementById('left-eye-file').files[0];
+            const rightEyeFile = document.getElementById('right-eye-file').files[0];
+            const resultDiv = document.getElementById('result');
+
+            if (!leftEyeFile && !rightEyeFile) {
+                resultDiv.textContent = 'Please select at least one image file.';
+                resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-red-600 bg-red-100';
+                return;
+            }
+
+            resultDiv.textContent = 'Predicting...';
+            resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-gray-600 bg-gray-100';
+
+            const formData = new FormData();
+            // Append files to FormData with a clear distinction
+            if (leftEyeFile) {
+                formData.append('left-eye-file', leftEyeFile);
+            }
+            if (rightEyeFile) {
+                formData.append('right-eye-file', rightEyeFile);
+            }
+
+            try {
+                // We'll send both files to the backend. The backend logic will need to be updated
+                // to handle multiple files and potentially return two predictions.
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.error) {
+                        resultDiv.textContent = `Error: ${data.error}`;
+                        resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-red-600 bg-red-100';
+                    } else {
+                        // Display both predictions
+                        resultDiv.innerHTML = `
+                            ${data['left-eye-prediction'] ? `<div>Left Eye Prediction: <span class="text-green-600">${data['left-eye-prediction']}</span></div>` : ''}
+                            ${data['right-eye-prediction'] ? `<div>Right Eye Prediction: <span class="text-green-600">${data['right-eye-prediction']}</span></div>` : ''}
+                        `;
+                        resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-green-600 bg-green-100';
+                    }
+                } else {
+                    resultDiv.textContent = `Error: ${data.error || 'Something went wrong on the server.'}`;
+                    resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-red-600 bg-red-100';
+                }
+            } catch (error) {
+                resultDiv.textContent = `Error: ${error.message}`;
+                resultDiv.className = 'mt-6 p-4 rounded-lg text-center font-bold text-red-600 bg-red-100';
+            }
+        });
+    </script>
+
+</body>
+</html>
