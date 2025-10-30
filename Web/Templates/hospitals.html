@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Eye Care - VisionGuide</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        /* --- DARK THEME STYLES (Eye-Friendly) --- */
+        :root {
+            --bg-dark: #0d1117; 
+            --card-bg: #161b22; 
+            --text-light: #c9d1d9; 
+            --accent-color: #00d4ff; 
+            --border-color: #30363d;
+            --input-bg: #21262d; 
+            --error-color: #f87171;
+            --link-hover: #00b3d6;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: var(--text-light);
+            transition: background-color 0.3s;
+        }
+        .container-card { 
+            background-color: var(--card-bg); 
+            border-radius: 1rem; 
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); 
+            border: 1px solid var(--border-color);
+        }
+        .accent-text { 
+            color: var(--accent-color); 
+        }
+        .btn-primary { 
+            background-color: var(--accent-color); 
+            color: var(--bg-dark); 
+            transition: background-color 0.2s; 
+        }
+        .btn-primary:hover { 
+            background-color: var(--link-hover); 
+        }
+        .results-box { 
+            border: 1px solid var(--border-color); 
+            border-radius: 0.5rem; 
+            background-color: var(--input-bg); 
+        }
+        input {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+        input:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 1px var(--accent-color);
+        }
+        .source-link {
+            color: var(--accent-color);
+        }
+        .source-link:hover {
+            color: var(--link-hover);
+        }
+        .text-muted {
+            color: var(--border-color);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold accent-text flex items-center">
+                <i class="bi bi-geo-alt-fill mr-3"></i> Find Nearby Eye Care
+            </h1>
+            <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-white transition duration-150 flex items-center">
+                <i class="bi bi-arrow-left-circle-fill mr-1"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <!-- Search Card -->
+        <div class="container-card p-6 md:p-8 mb-8">
+            <p class="text-gray-400 mb-4">
+                Enter a specific location or query to find relevant eye clinics, ophthalmologists, and hospitals using real-time search grounding.
+            </p>
+            
+            <form id="search-form" class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <input type="text" id="location-query" 
+                       placeholder="Enter City, Zip Code, or 'Eye Hospital in Chennai'" 
+                       value="{{ user_location | default('Eye specialists near me') }}"
+                       class="flex-1 p-3 border rounded-lg focus:ring-1 focus:ring-blue-500 transition duration-150" required>
+                
+                <button type="submit" id="search-button"
+                        class="btn-primary text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-200 flex items-center justify-center">
+                    <i class="bi bi-search mr-2"></i> Search Clinics
+                </button>
+            </form>
+            
+            <p id="error-message" class="text-red-400 mt-3 hidden"></p>
+        </div>
+
+        <!-- Results Display Area -->
+        <div class="container-card p-6 md:p-8">
+            <h2 class="text-2xl font-bold mb-4">Search Results</h2>
+            
+            <!-- Loading Indicator -->
+            <div id="loading-indicator" class="text-center p-8 hidden">
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-white border-t-transparent rounded-full mb-3"></div>
+                <p class="text-gray-400">Searching the web for eye care professionals...</p>
+            </div>
+
+            <!-- Content -->
+            <div id="results-content" class="results-box p-4 md:p-6 min-h-[200px] text-gray-300">
+                <p class="text-center text-gray-500 italic">Enter a location and hit 'Search Clinics' to find eye care professionals.</p>
+            </div>
+            
+            <!-- Sources/Citations -->
+            <div id="sources-container" class="mt-4 border-t border-gray-700 pt-4 hidden">
+                <h3 class="text-lg font-semibold text-gray-400 mb-2">Sources</h3>
+                <ul id="sources-list" class="space-y-2 text-sm text-gray-500">
+                    <!-- Sources will be injected here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('search-form');
+        const queryInput = document.getElementById('location-query');
+        const searchButton = document.getElementById('search-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const resultsContent = document.getElementById('results-content');
+        const sourcesContainer = document.getElementById('sources-container');
+        const sourcesList = document.getElementById('sources-list');
+        const errorMessage = document.getElementById('error-message');
+
+        // Function to display non-blocking messages
+        function displayMessage(message, isError = false) {
+            errorMessage.textContent = message;
+            if (isError) {
+                errorMessage.classList.remove('hidden');
+                resultsContent.innerHTML = `<p class="text-center text-red-400">Error: ${message}</p>`;
+            } else {
+                errorMessage.classList.add('hidden');
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const query = queryInput.value.trim();
+            if (!query) {
+                displayMessage("Please enter a location or query.", true);
+                return;
+            }
+
+            // Reset UI
+            displayMessage("", false);
+            resultsContent.innerHTML = '';
+            sourcesList.innerHTML = '';
+            sourcesContainer.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            searchButton.disabled = true;
+            searchButton.innerHTML = '<div class="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div> Searching';
+
+
+            try {
+                const response = await fetch('{{ url_for("search_hospitals_api") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: `Find eye clinics, ophthalmologists, or hospitals near: ${query}` })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Server error occurred.');
+                }
+
+                // Display Results (format using markdown-like parsing)
+                resultsContent.innerHTML = formatResponse(data.text);
+                
+                // Display Sources
+                if (data.sources && data.sources.length > 0) {
+                    data.sources.forEach(source => {
+                        if (source.uri && source.title) {
+                            const li = document.createElement('li');
+                            li.innerHTML = `<a href="${source.uri}" target="_blank" class="source-link hover:underline transition duration-150 flex items-center"><i class="bi bi-link-45deg mr-1"></i> ${source.title}</a>`;
+                            sourcesList.appendChild(li);
+                        }
+                    });
+                    sourcesContainer.classList.remove('hidden');
+                } else {
+                    sourcesContainer.classList.add('hidden');
+                }
+
+            } catch (error) {
+                console.error("Search failed:", error);
+                displayMessage(`Search failed: ${error.message}`, true);
+                resultsContent.innerHTML = '<p class="text-center text-red-400">Could not retrieve search results. Please check your query and try again.</p>';
+                sourcesContainer.classList.add('hidden');
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                searchButton.disabled = false;
+                searchButton.innerHTML = '<i class="bi bi-search mr-2"></i> Search Clinics';
+            }
+        });
+
+        // Function to format the plain text response into cleaner HTML (supports paragraphs and basic lists)
+        function formatResponse(text) {
+            if (!text) return '';
+            let html = text;
+
+            // Replace **bold** with <strong>
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Replace newlines for paragraphs
+            html = html.split('\n').filter(line => line.trim() !== '').map(line => {
+                // Handle list items (starting with *, -, or numbers)
+                if (line.match(/^(\*|-|\d+\.)\s/)) {
+                    return `<li>${line.replace(/^(\*|-|\d+\.)\s/, '')}</li>`;
+                }
+                return `<p class="mb-3">${line}</p>`;
+            }).join('');
+
+            // If lists were created, wrap them
+            if (html.includes('<li>')) {
+                // Simple wrapping logic: find sections of <li> tags and group them
+                html = html.replace(/(<p class="mb-3">.*?<\/p>)|(<li>.*?<\/li>)/g, (match, pTag, liTag) => {
+                    if (pTag) return pTag;
+                    return `<ul class="list-disc ml-6 space-y-1 mb-3">${liTag}</ul>`;
+                });
+                
+                // Clean up any remaining list-item tags that didn't get wrapped correctly (edge case)
+                html = html.replace(/<\/ul><ul class="list-disc ml-6 space-y-1 mb-3">/g, '');
+            }
+
+
+            // Final cleanup for headers (optional)
+            html = html.replace(/### (.*)/g, '<h3 class="text-xl font-semibold mt-4 mb-2">$1</h3>');
+
+
+            return html;
+        }
+    </script>
+</body>
+</html>

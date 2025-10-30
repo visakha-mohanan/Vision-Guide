@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Eye Exercises</title>
+  <style>
+    /* ====== Theme Variables ====== */
+    :root {
+      --bg-color: #0d1117;
+      --text-color: #e6edf3;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --accent: #58a6ff;
+      --accent-hover: #2ea043;
+      --timer-color: #f778ba;
+      --button-bg: #238636;
+    }
+
+    body.light {
+      --bg-color: #f9f9f9;
+      --text-color: #202124;
+      --card-bg: #ffffff;
+      --card-border: #ccc;
+      --accent: #1f6feb;
+      --accent-hover: #1456b8;
+      --timer-color: #c2185b;
+      --button-bg: #1f6feb;
+    }
+
+    /* ====== Base Styles ====== */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 30px;
+      letter-spacing: 1px;
+    }
+
+    /* ====== Grid Layout ====== */
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 25px;
+      width: 100%;
+      max-width: 1300px;
+    }
+
+    /* ====== Exercise Card ====== */
+    .exercise {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .exercise:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 20px rgba(56, 139, 253, 0.4);
+    }
+
+    .exercise img {
+      width: 100%;
+      height: 300px;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background-color: var(--bg-color);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .exercise img:hover {
+      transform: scale(1.02);
+    }
+
+    .exercise h2 {
+      font-size: 1.4rem;
+      color: var(--accent);
+      margin-top: 15px;
+    }
+    .exercise p {
+      font-size: 1rem;
+      color: var(--text-color);
+      margin: 8px 0 15px 0;
+    }
+
+    button {
+      background-color: var(--button-bg);
+      border: none;
+      color: white;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .timer {
+      margin-top: 10px;
+      font-size: 1.3rem;
+      color: var(--timer-color);
+      font-weight: bold;
+    }
+
+    /* ====== Floating Buttons ====== */
+    .theme-toggle, .back-btn {
+      position: fixed;
+      top: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.3);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .theme-toggle:hover, .back-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .theme-toggle {
+      right: 20px;
+    }
+
+    .back-btn {
+      left: 20px;
+      text-decoration: none;
+      color: var(--accent);
+    }
+
+    /* ====== Image Modal ====== */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.85);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal img {
+      max-width: 90%;
+      max-height: 90%;
+      border-radius: 10px;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 20px var(--accent);
+    }
+    .close-btn {
+      color: white;
+      font-size: 2rem;
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .close-btn:hover {
+      color: var(--accent);
+    }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 768px) {
+      body { padding: 20px; }
+      .exercise img { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Back button -->
+  <a href="{{ url_for('dashboard') }}" class="back-btn" title="Back to Dashboard">⬅</a>
+
+  <!-- Theme toggle button -->
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+
+  <h1>👁️ Interactive Eye Exercises</h1>
+
+  <div class="exercise-grid">
+    <!-- 1. 20-20-20 Rule -->
+    <div class="exercise">
+      <h2>1. 20-20-20 Rule</h2>
+      <img src="../static/images/20_20_20_rule.jpg" alt="20-20-20 rule demo">
+      <p>Every 20 minutes, look at something 20 feet away for 20 seconds to relax eye muscles.</p>
+      <button onclick="startTimer('timer2020', 20)">Start 20s Timer</button>
+      <div id="timer2020" class="timer">20</div>
+    </div>
+
+    <!-- 2. Palming -->
+    <div class="exercise">
+      <h2>2. Palming</h2>
+      <img src="../static/images/palming.jpg" alt="Palming demo">
+      <p>Relax tired eyes by cupping warm palms over them for a minute.</p>
+      <button onclick="startTimer('timerPalm', 60)">Start 1 min Timer</button>
+      <div id="timerPalm" class="timer">60</div>
+    </div>
+
+    <!-- 3. Near and Far Focus -->
+    <div class="exercise">
+      <h2>3. Near and Far Focus</h2>
+      <img src="../static/images/near_and_far_focusing.jpg" alt="Near and far focus demo">
+      <p>Focus on your thumb, then shift gaze to an object 20+ feet away. Repeat for 2 minutes.</p>
+      <button onclick="startTimer('timerNearFar', 120)">Start 2 min Timer</button>
+      <div id="timerNearFar" class="timer">120</div>
+    </div>
+
+    <!-- 4. Figure Eight Tracking -->
+    <div class="exercise">
+      <h2>4. Figure Eight Tracking</h2>
+      <img src="../static/images/figure_eight.jpg" alt="Figure eight demo">
+      <p>Trace a large horizontal figure eight with your eyes slowly for 1–2 minutes.</p>
+      <button onclick="startTimer('timerFigure8', 60)">Start 1 min Timer</button>
+      <div id="timerFigure8" class="timer">60</div>
+    </div>
+
+    <!-- 5. Pencil Push-Ups -->
+    <div class="exercise">
+      <h2>5. Pencil Push-Ups</h2>
+      <img src="../static/images/pencil_pushup.jpg" alt="Pencil push-ups demo">
+      <p>Hold a pencil at arm’s length and bring it toward your nose while focusing on the tip.</p>
+      <button onclick="startTimer('timerPencil', 60)">Start 1 min Timer</button>
+      <div id="timerPencil" class="timer">60</div>
+    </div>
+
+    <!-- 6. Eye Rolling -->
+    <div class="exercise">
+      <h2>6. Eye Rolling</h2>
+      <img src="../static/images/eye_rolling.jpg" alt="Eye Rolling demo">
+      <p>Slowly roll your eyes clockwise and then counter-clockwise for 30 seconds to relax eye muscles.</p>
+      <button onclick="startTimer('timerEyeRoll', 30)">Start 30s Timer</button>
+      <div id="timerEyeRoll" class="timer">30</div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="modal" id="imageModal">
+    <span class="close-btn" id="closeModal">&times;</span>
+    <img id="modalImg" src="" alt="Enlarged Image">
+  </div>
+
+  <script>
+    // Timer function
+    function startTimer(elementId, seconds) {
+      let time = seconds;
+      let display = document.getElementById(elementId);
+      display.textContent = time;
+      clearInterval(display.timerInterval);
+      display.timerInterval = setInterval(() => {
+        display.textContent = time;
+        time--;
+        if (time < 0) {
+          clearInterval(display.timerInterval);
+          display.textContent = "✅ Done!";
+        }
+      }, 1000);
+    }
+
+    // Theme toggle
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      themeBtn.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    });
+
+    // Image modal
+    const modal = document.getElementById("imageModal");
+    const modalImg = document.getElementById("modalImg");
+    const closeBtn = document.getElementById("closeModal");
+
+    document.querySelectorAll('.exercise img').forEach(img => {
+      img.addEventListener('click', () => {
+        modal.style.display = "flex";
+        modalImg.src = img.src;
+      });
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.style.display = "none";
+    });
+  </script>
+</body>
+</html>

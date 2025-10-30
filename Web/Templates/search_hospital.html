@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Nearby Eye Care | VisionGuide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+        .btn-primary { background-color: #3B82F6; }
+        .btn-primary:hover { background-color: #2563EB; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center pt-8 md:pt-12">
+
+    <!-- Header and Navigation -->
+    <header class="w-full max-w-4xl px-4 mb-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-gray-800">Find Nearby Eye Care</h1>
+            <a href="{{ url_for('dashboard') }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                &larr; Back to Dashboard
+            </a>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl px-4">
+        <div class="card bg-white p-6 md:p-8 rounded-xl">
+            
+            <p class="text-gray-600 mb-6">Enter your location to find the best ophthalmologists and eye specialists near you. Results are powered by the Gemini AI and Google Search.</p>
+
+            <!-- Location Input Form -->
+            <form id="searchForm" class="flex flex-col md:flex-row gap-4 mb-8">
+                <input 
+                    type="text" 
+                    id="locationInput" 
+                    placeholder="Enter City or Zip Code (e.g., London, SW1A 0AA)" 
+                    required 
+                    class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                >
+                <button 
+                    type="submit" 
+                    class="btn-primary text-white font-semibold py-3 px-6 rounded-lg transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                    <span id="buttonText">Search Specialists</span>
+                    <svg id="spinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Results Display Area -->
+            <div id="resultsContainer" class="mt-8">
+                <div id="loadingMessage" class="hidden text-center p-6 bg-yellow-100 text-yellow-800 rounded-lg">
+                    Searching for specialists... This may take a moment.
+                </div>
+                <div id="errorMessage" class="hidden text-center p-6 bg-red-100 text-red-700 rounded-lg">
+                    An error occurred while fetching results.
+                </div>
+                
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m10.606-10.607l-4.243 4.243m0 0l-4.243 4.243m4.243-4.243l-4.243-4.243m-4.243 4.243L12 12m0-4l4.243 4.243m-8.486 0L12 12m0-4l4.243 4.243"></path></svg>
+                    Nearby Specialist Recommendations
+                </h2>
+                
+                <div id="recommendationsText" class="p-6 bg-white border border-gray-200 rounded-lg text-gray-700 leading-relaxed min-h-[100px]">
+                    <p class="text-gray-500 italic">Enter a city or location above and click 'Search Specialists' to view results here.</p>
+                </div>
+                
+                <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-3 border-t pt-4">Sources Found</h3>
+                <ul id="sourcesList" class="space-y-2 text-sm text-gray-600">
+                    <li id="initialSourceMessage" class="text-gray-500 italic">Sources will appear here after a successful search.</li>
+                </ul>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="mt-8 text-center text-gray-500 text-sm pb-8">
+        &copy; 2025 VisionGuide. All rights reserved.
+    </footer>
+
+    <script>
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const location = document.getElementById('locationInput').value.trim();
+            const resultsContainer = document.getElementById('resultsContainer');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const recommendationsText = document.getElementById('recommendationsText');
+            const sourcesList = document.getElementById('sourcesList');
+            const button = this.querySelector('button');
+            const buttonText = document.getElementById('buttonText');
+            const spinner = document.getElementById('spinner');
+
+            if (!location) return;
+
+            // 1. Reset and Show Loading
+            recommendationsText.innerHTML = '';
+            sourcesList.innerHTML = '';
+            errorMessage.classList.add('hidden');
+            loadingMessage.classList.remove('hidden');
+            
+            button.disabled = true;
+            buttonText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+
+            try {
+                // Fetch the response from the Flask backend (which calls the Gemini API)
+                const response = await fetch('/search_hospitals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ location: location })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 2. Display Recommendations Text
+                recommendationsText.innerHTML = data.text.replace(/\n/g, '<br>');
+
+                // 3. Display Sources
+                if (data.sources && data.sources.length > 0) {
+                    data.sources.forEach(source => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<a href="${source.uri}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline transition">${source.title || source.uri}</a>`;
+                        sourcesList.appendChild(li);
+                    });
+                } else {
+                    sourcesList.innerHTML = '<li>No specific web sources were returned for this query.</li>';
+                }
+
+            } catch (error) {
+                console.error('Search failed:', error);
+                errorMessage.classList.remove('hidden');
+                recommendationsText.innerHTML = '<p class="text-gray-500 italic">Please try a different location or check your network connection.</p>';
+                sourcesList.innerHTML = '<li>Error fetching sources.</li>';
+            } finally {
+                // 4. Hide Loading and Reset Button
+                loadingMessage.classList.add('hidden');
+                button.disabled = false;
+                buttonText.classList.remove('hidden');
+                spinner.classList.add('hidden');
+            }
+        });
+        
+        // Initial setup for the recommendations box (optional, but helpful for UX)
+        document.getElementById('recommendationsText').innerHTML = `
+            <p class="text-gray-500 italic">Enter a city or location above and click 'Search Specialists' to view results here.</p>
+        `;
+
+    </script>
+</body>
+</html>

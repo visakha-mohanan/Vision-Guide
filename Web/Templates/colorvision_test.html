@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Vision Test - VisionGuide</title>
+  <style>
+    /* ===== Theme Variables ===== */
+    :root {
+      --bg-color: #0d1117;
+      --text-color: #e6edf3;
+      --card-bg: #161b22;
+      --card-border: #30363d;
+      --accent: #58a6ff;
+      --accent-hover: #2ea043;
+      --progress: #2ea043;
+      --button-bg: #238636;
+    }
+
+    body.light {
+      --bg-color: #f9f9f9;
+      --text-color: #202124;
+      --card-bg: #ffffff;
+      --card-border: #ccc;
+      --accent: #1f6feb;
+      --accent-hover: #1456b8;
+      --progress: #1f6feb;
+      --button-bg: #1f6feb;
+    }
+
+    /* ===== Base Styles ===== */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--accent);
+      margin-bottom: 20px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      max-width: 550px;
+      width: 100%;
+      padding: 30px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .container:hover {
+      transform: scale(1.01);
+      box-shadow: 0 6px 20px rgba(56, 139, 253, 0.4);
+    }
+
+    img {
+      border-radius: 10px;
+      margin: 20px 0;
+      max-width: 100%;
+      border: 1px solid var(--card-border);
+      background-color: var(--bg-color);
+    }
+
+    input {
+      padding: 10px;
+      width: 70%;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background-color: var(--button-bg);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .progress-container {
+      width: 100%;
+      background-color: var(--card-border);
+      border-radius: 5px;
+      height: 10px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 10px;
+      width: 0%;
+      background-color: var(--progress);
+      border-radius: 5px;
+      transition: width 0.4s ease;
+    }
+
+    .correct { color: #2ea043; font-weight: bold; }
+    .wrong { color: #f85149; font-weight: bold; }
+
+    /* Floating Buttons */
+    .theme-toggle, .back-btn {
+      position: fixed;
+      top: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 1px solid var(--card-border);
+      background-color: var(--card-bg);
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px rgba(88, 166, 255, 0.3);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .theme-toggle:hover, .back-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .theme-toggle {
+      right: 20px;
+    }
+
+    .back-btn {
+      left: 20px;
+      text-decoration: none;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Back button -->
+  <a href="{{ url_for('dashboard') }}" class="back-btn" title="Back to Dashboard">⬅</a>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+
+  <h1>Color Vision Test</h1>
+
+  <div class="container">
+    <p>Identify what number or pattern you see in each Ishihara plate below.</p>
+
+    <div class="progress-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div id="test-container"></div>
+
+    <div id="answer-container">
+      <input type="text" id="user-answer" placeholder="Enter what you see">
+      <button id="submit-answer">Next</button>
+    </div>
+
+    <div id="result-container" style="display:none;">
+      <h2>Your Score: <span id="score"></span>/5</h2>
+      <div id="feedback"></div>
+      <button onclick="restartTest()">Restart Test</button>
+    </div>
+  </div>
+
+  <script>
+    const plates = [
+      { src: "../static/images/plate1.png", answer: "12" },
+      { src: "../static/images/plate2.png", answer: "42" },
+      { src: "../static/images/plate3.png", answer: "6" },
+      { src: "../static/images/plate4.png", answer: "74" },
+      { src: "../static/images/plate5.png", answer: "w" }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let userAnswers = [];
+
+    const testContainer = document.getElementById("test-container");
+    const userAnswerInput = document.getElementById("user-answer");
+    const submitButton = document.getElementById("submit-answer");
+    const resultContainer = document.getElementById("result-container");
+    const scoreDisplay = document.getElementById("score");
+    const feedback = document.getElementById("feedback");
+    const progressBar = document.getElementById("progress-bar");
+
+    function showPlate(index) {
+      testContainer.innerHTML = `<img src="${plates[index].src}" alt="Plate ${index+1}">`;
+      userAnswerInput.value = "";
+      userAnswerInput.focus();
+    }
+
+    function updateProgressBar() {
+      const percent = (currentIndex / plates.length) * 100;
+      progressBar.style.width = percent + "%";
+    }
+
+    submitButton.addEventListener("click", () => {
+      const userAnswer = userAnswerInput.value.trim();
+      if(userAnswer === "") {
+        alert("Please enter your answer before proceeding.");
+        return;
+      }
+
+      userAnswers.push(userAnswer);
+      if(userAnswer === plates[currentIndex].answer) score++;
+
+      currentIndex++;
+
+      if(currentIndex < plates.length) {
+        showPlate(currentIndex);
+        updateProgressBar();
+      } else {
+        showResults();
+      }
+    });
+
+    function showResults() {
+      testContainer.style.display = "none";
+      document.getElementById("answer-container").style.display = "none";
+      progressBar.style.width = "100%";
+      resultContainer.style.display = "block";
+      scoreDisplay.textContent = score;
+
+      let feedbackHTML = "";
+      plates.forEach((plate, index) => {
+        if(userAnswers[index] === plate.answer) {
+          feedbackHTML += `<p class="correct">✅ Plate ${index+1}: Correct (${plate.answer})</p>`;
+        } else {
+          feedbackHTML += `<p class="wrong">❌ Plate ${index+1}: Expected ${plate.answer}, you entered ${userAnswers[index]}</p>`;
+        }
+      });
+
+      // ✅ Added Vision Feedback Section
+      let message = "";
+      if (score === plates.length) {
+        message = `<p style="color:#2ea043; font-weight:bold; font-size:1.1rem;">🌟 Perfect Vision! You identified all plates correctly.</p>`;
+      } else if (score >= 4) {
+        message = `<p style="color:#58a6ff; font-weight:bold; font-size:1.1rem;">👏 Great! Your color vision seems normal.</p>`;
+      } else if (score <= 3) {
+        message = `<p style="color:#f85149; font-weight:bold; font-size:1.1rem;">⚠️ We recommend visiting an eye specialist for a detailed color vision check.</p>`;
+      }
+
+      feedback.innerHTML = feedbackHTML + "<hr>" + message;
+    }
+
+    function restartTest() {
+      currentIndex = 0;
+      score = 0;
+      userAnswers = [];
+      testContainer.style.display = "block";
+      document.getElementById("answer-container").style.display = "block";
+      resultContainer.style.display = "none";
+      updateProgressBar();
+      showPlate(currentIndex);
+    }
+
+    // Theme toggle
+    const themeBtn = document.getElementById('themeToggle');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      themeBtn.textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+    });
+
+    // Initialize test
+    showPlate(currentIndex);
+    updateProgressBar();
+  </script>
+</body>
+</html>
